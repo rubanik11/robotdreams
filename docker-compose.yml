@@ -1,0 +1,28 @@
+# docker-compose.yml для apps/course-app
+# Піднімає два сервіси: сам застосунок і redis як зовнішнє сховище.
+
+services:
+  # Redis — зовнішнє key-value сховище для course-app
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Чекаємо, поки redis справді готовий приймати запити
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # course-app — Go-застосунок, який збирається з Dockerfile у apps/course-app
+  course-app:
+    build: ./apps/course-app
+    ports:
+      - "8080:8080"
+    environment:
+      APP_STORE: redis
+      APP_REDIS_URL: redis://redis:6379/0
+    # Стартуємо app лише після того, як redis пройде healthcheck
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped

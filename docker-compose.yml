@@ -1,0 +1,50 @@
+# Compose-файл для course-app з redis
+
+services:
+  course-app:
+    # явний image потрібен для swarm
+    image: course-app:latest
+    build:
+      # код і requirements.txt лежать в apps/course-app
+      context: ./apps/course-app
+      # Dockerfile в корені репо
+      dockerfile: ../../Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      APP_STORE: redis
+      APP_REDIS_URL: redis://redis:6379/0
+    # перевіряємо чи відповідає /healthz
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    # redis має піднятись першим; у swarm course-app рестартує сам поки redis не стане healthy
+    depends_on:
+      - redis
+    # рестартує сам, якщо щось впаде
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+
+  redis:
+    image: redis:alpine
+    volumes:
+      # тут redis тримає дані, в т.ч. лічильник відвідувань
+      - appdata:/data
+    # перевіряємо чи redis живий
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
+
+volumes:
+  appdata:

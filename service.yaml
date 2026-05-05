@@ -1,0 +1,14 @@
+# Service для course-app, тип NodePort щоб достукатись зовні
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: course-app
+spec:
+  type: NodePort
+  selector:
+    app: course-app
+  ports:
+    - port: 8080         # порт сервісу всередині кластера
+      targetPort: 8080   # порт у поді
+      nodePort: 30080    # порт на ноді — http://localhost:30080

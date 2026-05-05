@@ -1,0 +1,10 @@
+# ConfigMap для course-app
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: course-app-config
+data:
+  APP_STORE: "memory"
+  APP_LOG_LEVEL: "info"
+  APP_GREETING: "hello-from-configmap-v1"
